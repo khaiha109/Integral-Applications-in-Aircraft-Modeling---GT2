@@ -26,6 +26,9 @@
 
 ### 2.1. Clone repo
 
+Chọn <Code> -> open with Github Desktop (khuyến khích nên tải Github Desktop)/Download Zip (này nào làm xong gửi Khải để Khải push lên)
+
+
 ```bash
 git clone https://github.com/<username>/<ten-repo>.git
 cd <ten-repo>
