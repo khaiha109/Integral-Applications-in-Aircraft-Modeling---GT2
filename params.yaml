@@ -1,0 +1,42 @@
+# =====================================================================
+# params.yaml - Tham số đầu vào dùng chung cho toàn bộ chương trình
+# Đơn vị SI: m, kg, s, N, Pa (góc nhập bằng ĐỘ, code tự đổi sang radian)
+# Hệ tọa độ: x dọc thân (mũi -> đuôi), y theo sải cánh, z hướng lên
+# Chỉ sửa giá trị ở đây, KHÔNG hard-code trong các module.
+# =====================================================================
+
+airfoil:
+  naca: "2412"            # NACA 4 chữ số: m=2%, p=0.4, t=12% (viết trong ngoặc kép)
+
+wing:
+  span: 10.0              # b - sải cánh toàn phần [m]
+  chord_root: 1.8         # dây cung gốc cánh [m]
+  chord_tip: 0.9          # dây cung mút cánh [m]
+  n_chord: 200            # số điểm lưới theo dây cung (dùng khi vẽ / tích phân số)
+  n_span: 100             # số điểm lưới theo sải (dùng khi vẽ / tích phân số)
+
+fuselage:
+  length: 8.0             # chiều dài thân [m]
+  radius_max: 0.7         # bán kính lớn nhất [m]
+  nose_length: 1.5        # chiều dài đoạn mũi [m]
+  tail_length: 2.5        # chiều dài đoạn đuôi [m]
+  skin_thickness: 0.003   # độ dày vỏ [m] (thân rỗng dạng vỏ mỏng)
+  density: 2700.0         # khối lượng riêng vật liệu [kg/m^3] (nhôm)
+
+flow:
+  rho: 1.225              # khối lượng riêng không khí [kg/m^3]
+  V_inf: 60.0             # vận tốc dòng tự do [m/s]
+  alpha_deg: 4.0          # góc tới [độ]
+  mu: 1.81e-5             # độ nhớt động lực học [Pa.s]
+
+aero:                     # mô hình lực khí động (xem docs/assumptions.md)
+  alpha_L0_deg: -2.0      # góc nâng không của airfoil [độ] (NACA 2412 ~ -2.0)
+  span_loading: elliptic  # phân bố tải theo sải: elliptic | uniform
+  finite_wing_correction: true   # hiệu chỉnh độ dốc lực nâng cho cánh hữu hạn
+  oswald_e: 0.9           # hệ số Oswald (cho hiệu chỉnh cánh hữu hạn và lực cản cảm ứng)
+  leading_edge_suction: true     # tính lực hút mép trước (thiết diện mỏng -> lực cản áp suất 2D = 0)
+  include_induced_drag: true     # cộng lực cản cảm ứng tham chiếu CL^2/(pi*e*AR)
+  boundary_layer: auto    # ma sát bề mặt: laminar | turbulent | auto
+  transition_re: 500000.0 # Re chuyển tiếp (dùng khi boundary_layer = auto)
+  n_theta: 96             # số nút Gauss theo dây cung (biến theta, u=(1-cos theta)/2)
+  n_span: 64              # số nút Gauss theo sải

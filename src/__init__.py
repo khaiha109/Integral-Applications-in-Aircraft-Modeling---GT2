@@ -1,0 +1,1 @@
+"""Ứng dụng tích phân trong mô hình hóa máy bay (BTL Giải tích 2)."""

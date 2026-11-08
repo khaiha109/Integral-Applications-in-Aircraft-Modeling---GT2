@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+plotly
+pyyaml
+pandas
+jupyter
+kaleido        # xuất ảnh tĩnh từ plotly

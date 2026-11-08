@@ -1,6 +1,6 @@
 # Ứng dụng tích phân trong máy bay
 
-> Bài tập lớn môn **Giải tích 3** — Phần 1: CODE & Mô hình hóa 3D
+> Bài tập lớn môn **Giải tích 2** — Phần 1: CODE & Mô hình hóa 3D
 > Mô hình hóa cánh và thân máy bay; dùng tích phân kép, tích phân bội ba để tính diện tích, thể tích, khối lượng; dùng tích phân mặt để ước lượng lực nâng và lực cản; trực quan hóa bằng mô hình 3D.
 
 | Mục | Thông tin |
@@ -82,19 +82,11 @@ kaleido        # xuất ảnh tĩnh từ plotly
 python -c "import numpy, scipy, matplotlib, plotly, yaml; print('OK')"
 ```
 
-### 2.5. (Tùy chọn) Dùng Conda thay cho venv
 
-```bash
-conda create -n aircraft python=3.11 -y
-conda activate aircraft
-pip install -r requirements.txt
-```
-
-### 2.6. Thoát môi trường ảo
+### 2.5. Thoát môi trường ảo
 
 ```bash
 deactivate        # venv
-conda deactivate  # conda
 ```
 
 > Mỗi khi thêm thư viện mới: `pip install <tên>` rồi cập nhật `requirements.txt` (`pip freeze > requirements.txt`) và báo cho nhóm.
