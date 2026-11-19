@@ -1,0 +1,77 @@
+{
+  "parameters": {
+    "airfoil": {
+      "naca": "2412"
+    },
+    "wing": {
+      "span": 10.0,
+      "chord_root": 1.8,
+      "chord_tip": 0.9,
+      "n_chord": 200,
+      "n_span": 100
+    },
+    "fuselage": {
+      "length": 8.0,
+      "radius_max": 0.7,
+      "nose_length": 1.5,
+      "tail_length": 2.5,
+      "skin_thickness": 0.003,
+      "density": 2700.0
+    },
+    "flow": {
+      "rho": 1.225,
+      "V_inf": 60.0,
+      "alpha_deg": 4.0,
+      "mu": 1.81e-05
+    },
+    "aero": {
+      "alpha_L0_deg": -2.0,
+      "span_loading": "elliptic",
+      "finite_wing_correction": true,
+      "oswald_e": 0.9,
+      "leading_edge_suction": true,
+      "include_induced_drag": true,
+      "boundary_layer": "auto",
+      "transition_re": 500000.0,
+      "n_theta": 96,
+      "n_span": 64
+    }
+  },
+  "geometry": {
+    "S_projected_m2": 13.5,
+    "area_upper": 13.867609436318464,
+    "area_lower": 13.697316156290993,
+    "total_surface_area": 27.564925592609455,
+    "volume_solid": 8.755226026473053,
+    "volume_skin": 0.0816475334617438,
+    "mass_skin_kg": 220.44834034670828,
+    "volume_wing_m3": 1.5442434000000003,
+    "area_fuselage_m2": 27.898117962427687
+  },
+  "aerodynamics": {
+    "L": 15089.642379579238,
+    "L_pressure": 15103.131598979338,
+    "L_friction": -13.489219400099971,
+    "D_pressure_raw": 370.9863630954159,
+    "D_suction_correction": -370.9863630954159,
+    "D_pressure": 4.857568061907517e-14,
+    "D_friction": 196.7564831415321,
+    "D_induced_ref": 365.2219900288888,
+    "D_total": 561.978473170421,
+    "CL": 0.5069166836173423,
+    "CD": 0.018878927460163633,
+    "L_over_D": 26.85092596954915,
+    "S_ref": 13.500000000000002,
+    "AR": 7.4074074074074066,
+    "lift_slope": 4.83321946706122,
+    "alpha_eff_deg": 6.000000000000001,
+    "q_inf": 2205.0
+  },
+  "validation": {
+    "geometry_passed": 9,
+    "geometry_total": 9,
+    "aero_reference_passed": 14,
+    "aero_reference_total": 14,
+    "aero_reference_note": "Bộ kiểm chứng của Khải dùng cánh phẳng tham chiếu; lực máy bay dùng cánh NACA 2412."
+  }
+}

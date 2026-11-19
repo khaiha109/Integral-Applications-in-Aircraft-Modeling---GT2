@@ -21,7 +21,6 @@ import copy
 import math
 import time
 from pathlib import Path
-from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -43,54 +42,99 @@ from .aero import (
 # PHẦN VIỆC CỦA TRƯƠNG THANH VĨ (Kiểm chứng hình học, diện tích, thể tích)
 # ==============================================================================
 
-def validate_geometry(config: Dict[str, Any]) -> pd.DataFrame:
+def validate_geometry(config=None) -> pd.DataFrame:
+    """So tích phân số cánh/thân với công thức đóng và trường hợp hình trụ.
+
+    Input là Params, đường dẫn params.yaml hoặc None. Đầu ra là DataFrame;
+    các hàng thể tích vỏ đối chiếu 1D với bội ba, không gọi là giải tích.
+    # AI-assisted: xem AI_DECLARATION.md
     """
-    Kiểm chứng độ chính xác của các thuật toán tích phân hình học:
-    1. Diện tích hình chiếu cánh: So sánh tích phân số với công thức hình thang giải tích S = (c_root + c_tip)/2 * b.
-    2. Thể tích thân máy bay: So sánh tích phân số với khối hình mẫu (hình trụ V = pi*R^2*L hoặc ellipsoid 4/3*pi*a*b*c).
+    from .wing import calculate_projected_area, calculate_surface_area
+    from .fuselage import (analytical_fuselage_volume,
+                           calculate_fuselage_volume)
 
-    Parameters
-    ----------
-    config : dict
-        Tham số cấu hình từ params.yaml
+    p = _resolve_params(config)
+    w, f = p.wing, p.fuselage
+    cols = ["Đại lượng", "Tích phân số", "Tham chiếu", "Đơn vị",
+            "Sai số tuyệt đối", "Sai số tương đối (%)", "Đánh giá", "Phương pháp"]
+    rows = []
 
-    Returns
-    -------
-    pd.DataFrame
-        Bảng so sánh: [Đại lượng, Giải tích, Tích phân số, Sai số tuyệt đối, Sai số tương đối (%)]
+    def add(name, num, ref, unit, method, tol=0.01):
+        err = abs(num - ref)
+        pct = err / abs(ref) * 100 if ref else 0.0
+        rows.append([name, num, ref, unit, err, pct,
+                     "ĐẠT" if pct <= tol else "KHÔNG ĐẠT", method])
 
-    TODO (Trương Thanh Vĩ):
-    - Tính diện tích hình chiếu giải tích vs số trị.
-    - Tính thể tích thân theo 2 phương pháp (quad vs tplquad/trapezoid).
-    - Tính sai số tương đối: error (%) = |val_num - val_exact| / val_exact * 100%.
-    - Đóng gói kết quả thành DataFrame để xuất ra bảng báo cáo.
+    b, cr, ct = w.span, w.chord_root, w.chord_tip
+    s_exact = calculate_projected_area(b, cr, ct)
+    s_num = calculate_projected_area(b, cr, ct, "numerical")
+    add("Diện tích hình chiếu cánh", s_num, s_exact, "m²", "dblquad vs hình thang")
+
+    kw = dict(nose_length=f.nose_length, tail_length=f.tail_length)
+    v_1d = calculate_fuselage_volume(f.length, f.radius_max, f.skin_thickness,
+                                     method="single_integral", **kw)
+    v_3d = calculate_fuselage_volume(f.length, f.radius_max, f.skin_thickness,
+                                     method="triple_integral", **kw)
+    v_exact = analytical_fuselage_volume(f.length, f.radius_max, **kw)
+    add("Thể tích thân đặc (1D)", v_1d["volume_solid"], v_exact, "m³",
+        "quad vs công thức ba đoạn")
+    add("Thể tích thân đặc (bội ba)", v_3d["volume_solid"], v_exact, "m³",
+        "tplquad vs công thức ba đoạn")
+    add("Thể tích vỏ thân (bội ba)", v_3d["volume_skin"], v_1d["volume_skin"], "m³",
+        "tplquad vs quad")
+
+    cylinder = calculate_fuselage_volume(f.length, f.radius_max, 0,
+                                         nose_length=0, tail_length=0)
+    add("Thân hình trụ kiểm tra", cylinder["volume_solid"],
+        math.pi * f.radius_max**2 * f.length, "m³", "quad vs πR²L")
+
+    # Bổ sung (Khải, 19/11/2026, cần Vĩ review): thể tích khối cánh (tích phân bội ba)
+    from .wing import calculate_wing_volume
+    add("Thể tích khối cánh", calculate_wing_volume(b, cr, ct, p.airfoil.naca, "triple"),
+        calculate_wing_volume(b, cr, ct, p.airfoil.naca, "iterated"), "m³",
+        "tplquad vs tích phân lặp ∫c²dy·2∫y_t du")
+
+    # Bổ sung (Khải, 19/11/2026, cần Vĩ review): diện tích mặt ngoài thân
+    from .fuselage import calculate_fuselage_surface_area
+    a_fus_2d = calculate_fuselage_surface_area(f.length, f.radius_max, **kw)
+    a_fus_1d = calculate_fuselage_surface_area(f.length, f.radius_max, **kw,
+                                               method="single_integral")
+    add("Diện tích mặt thân (tích phân mặt)", a_fus_2d, a_fus_1d, "m²",
+        "dblquad(x,θ) vs 2π∫R√(1+R'²)dx")
+    a_cyl = calculate_fuselage_surface_area(f.length, f.radius_max, 0, 0)
+    add("Mặt bên thân hình trụ kiểm tra", a_cyl, 2 * math.pi * f.radius_max * f.length,
+        "m²", "tích phân mặt vs 2πRL")
+
+    area = calculate_surface_area(b, cr, ct, p.airfoil.naca,
+                                  w.n_chord, w.n_span)["total_surface_area"]
+    rows.append(["Diện tích bề mặt cánh", area, 2 * s_exact, "m²",
+                 float("nan"), float("nan"), "ĐẠT" if area > 2 * s_exact else "KHÔNG ĐẠT",
+                 "Kiểm tra cận dưới A > 2S; 2S không phải đáp án giải tích"])
+    return pd.DataFrame(rows, columns=cols)
+
+
+def check_mesh_convergence(config=None) -> pd.DataFrame:
+    """Khảo sát hội tụ diện tích cánh; hàng cuối là tham chiếu số mịn nhất.
+
+    Mỗi lưới dùng Gauss-Legendre theo θ và nửa sải; sai số tính so hàng cuối.
+    # AI-assisted: xem AI_DECLARATION.md
     """
-    # TODO (Trương Thanh Vĩ): Hoàn thiện hàm kiểm chứng hình học
-    # from .wing import calculate_projected_area, calculate_surface_area
-    # from .fuselage import calculate_fuselage_volume
-    raise NotImplementedError("Trương Thanh Vĩ cần hoàn thiện hàm validate_geometry")
+    from .wing import calculate_surface_area
 
-
-def check_mesh_convergence(config: Dict[str, Any]) -> pd.DataFrame:
-    """
-    Khảo sát sự hội tụ của tích phân diện tích bề mặt cánh theo độ mịn lưới (n_chord, n_span).
-
-    Parameters
-    ----------
-    config : dict
-        Tham số cấu hình
-
-    Returns
-    -------
-    pd.DataFrame
-        Bảng kết quả với các kích thước lưới khác nhau (vd: 50x25, 100x50, 200x100, 400x200).
-
-    TODO (Trương Thanh Vĩ):
-    - Chạy vòng lặp qua các bộ kích thước lưới tăng dần.
-    - Ghi lại giá trị diện tích và thời gian tính toán.
-    """
-    # TODO (Trương Thanh Vĩ): Hoàn thiện kiểm tra hội tụ lưới
-    raise NotImplementedError("Trương Thanh Vĩ cần hoàn thiện hàm check_mesh_convergence")
+    p = _resolve_params(config)
+    grids = [(16, 8), (32, 16), (64, 32),
+             (max(128, p.wing.n_chord), max(64, p.wing.n_span))]
+    rows = []
+    for n_u, n_v in grids:
+        t0 = time.perf_counter()
+        area = calculate_surface_area(p.wing.span, p.wing.chord_root,
+                                      p.wing.chord_tip, p.airfoil.naca,
+                                      n_u, n_v)["total_surface_area"]
+        rows.append([n_u, n_v, area, (time.perf_counter() - t0) * 1000])
+    out = pd.DataFrame(rows, columns=["n_u", "n_v", "Diện tích [m²]", "Thời gian [ms]"])
+    reference = out["Diện tích [m²]"].iloc[-1]
+    out["Sai số so lưới mịn nhất (%)"] = abs(out["Diện tích [m²]"] - reference) / reference * 100
+    return out
 
 
 # ==============================================================================
@@ -278,6 +322,59 @@ def check_aero_convergence(config=None, wing=None,
     out["Sai số L (%)"] = (out["L [N]"] - L_ref).abs() / abs(L_ref) * 100.0
     out["Sai số D_f (%)"] = (out["D_friction [N]"] - Df_ref).abs() / abs(Df_ref) * 100.0
     return out[["n_theta", "n_span", "L [N]", "D_friction [N]", "Sai số L (%)", "Sai số D_f (%)", "Thời gian [ms]"]]
+
+
+def independent_checks(config=None, n_mc: int = 2_000_000, seed: int = 1,
+                       n_tri: tuple[int, int] = (1500, 300)) -> pd.DataFrame:
+    """Đối chiếu kết quả của chương trình với phương pháp số ĐỘC LẬP (Khải, mục 4.5).
+
+    - Diện tích mặt trên/dưới cánh: chia mặt thành lưới tam giác phẳng (n_tri), cộng diện tích
+      tam giác; không dùng công thức |r_u × r_v| nên độc lập với calculate_surface_area().
+    - Thể tích thân đặc: Monte Carlo n_mc điểm đều trong hộp [0,L]×[-R,R]², đếm điểm có
+      sqrt(y²+z²) <= R(x); kèm khoảng tin cậy 95 %.
+    - Thể tích vỏ thân: xấp xỉ vỏ mỏng A_thân·t_v (diện tích mặt × độ dày); sai lệch vài %
+      là do vỏ có bề dày đo theo bán kính, không theo pháp tuyến (xem docs/assumptions.md).
+    # AI-assisted: xem AI_DECLARATION.md
+    """
+    from .wing import calculate_surface_area, wing_surface
+    from .fuselage import (analytical_fuselage_volume, calculate_fuselage_surface_area,
+                           calculate_fuselage_volume, fuselage_radius)
+    p = _resolve_params(config)
+    w, f = p.wing, p.fuselage
+    kw = dict(nose_length=f.nose_length, tail_length=f.tail_length)
+
+    def tri_area(side: str) -> float:
+        th = np.linspace(0, math.pi, n_tri[0])
+        u = (1 - np.cos(th)) / 2
+        y = np.linspace(-w.semi_span, w.semi_span, n_tri[1])
+        U, Y = np.meshgrid(u, y, indexing="ij")
+        P = np.stack(wing_surface(U, Y, w.span, w.chord_root, w.chord_tip, p.airfoil.naca, side), -1)
+        a, b_, c, d = P[:-1, :-1], P[1:, :-1], P[1:, 1:], P[:-1, 1:]
+        return float((0.5 * np.linalg.norm(np.cross(b_ - a, c - a), axis=-1)
+                      + 0.5 * np.linalg.norm(np.cross(c - a, d - a), axis=-1)).sum())
+
+    A = calculate_surface_area(w.span, w.chord_root, w.chord_tip, p.airfoil.naca, w.n_chord, w.n_span)
+    rng = np.random.default_rng(seed)
+    Rm, L = f.radius_max, f.length
+    x = rng.uniform(0, L, n_mc); y = rng.uniform(-Rm, Rm, n_mc); z = rng.uniform(-Rm, Rm, n_mc)
+    hit = float((np.sqrt(y ** 2 + z ** 2) <= fuselage_radius(x, L, Rm, **kw)).mean())
+    box = L * (2 * Rm) ** 2
+    v_mc, v_ci = hit * box, 1.96 * math.sqrt(hit * (1 - hit) / n_mc) * box
+    v_skin = calculate_fuselage_volume(L, Rm, f.skin_thickness, **kw)["volume_skin"]
+    a_fus = calculate_fuselage_surface_area(L, Rm, **kw)
+
+    rows = [
+        ("Diện tích mặt trên cánh", A["area_upper"], tri_area("upper"), "m²",
+         f"Lưới tam giác {n_tri[0]} × {n_tri[1]}"),
+        ("Diện tích mặt dưới cánh", A["area_lower"], tri_area("lower"), "m²",
+         f"Lưới tam giác {n_tri[0]} × {n_tri[1]}"),
+        ("Thể tích thân đặc", analytical_fuselage_volume(L, Rm, **kw), v_mc, "m³",
+         f"Monte Carlo {n_mc:,} điểm (±{v_ci:.3f} m³, 95 %)"),
+        ("Thể tích vỏ thân", v_skin, a_fus * f.skin_thickness, "m³", "Xấp xỉ vỏ mỏng A_thân · t_v"),
+    ]
+    df = pd.DataFrame(rows, columns=["Đại lượng", "Chương trình", "Độc lập", "Đơn vị", "Phương pháp độc lập"])
+    df["Sai lệch (%)"] = (df["Chương trình"] - df["Độc lập"]).abs() / df["Độc lập"].abs() * 100
+    return df
 
 
 def save_aero_validation(config=None, wing=None) -> tuple[Path, Path]:

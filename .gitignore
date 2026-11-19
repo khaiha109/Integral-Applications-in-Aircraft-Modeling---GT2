@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Nhật ký làm việc cá nhân (không đẩy lên Git)
+WORK_LOG.md
+
+# File Word sinh ra bởi report/*.py
+report/out/

@@ -6,3 +6,4 @@ pyyaml
 pandas
 jupyter
 kaleido        # xuất ảnh tĩnh từ plotly
+streamlit      # dashboard tương tác trên trình duyệt

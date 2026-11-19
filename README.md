@@ -3,6 +3,44 @@
 > Bài tập lớn môn **Giải tích 2** — Phần 1: CODE & Mô hình hóa 3D
 > Mô hình hóa cánh và thân máy bay; dùng tích phân kép, tích phân bội ba để tính diện tích, thể tích, khối lượng; dùng tích phân mặt để ước lượng lực nâng và lực cản; trực quan hóa bằng mô hình 3D.
 
+## Chạy nhanh phiên bản hiện tại
+
+Mở PowerShell hoặc Terminal của VS Code tại thư mục chứa file `main.py`. Nếu máy chưa có `.venv`, tạo môi trường và cài thư viện:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Sau đó dùng ba lệnh sau:
+
+```powershell
+.\.venv\Scripts\python.exe main.py
+.\.venv\Scripts\python.exe run_checks.py
+.\.venv\Scripts\python.exe -m streamlit run dashboard.py
+```
+
+Mở địa chỉ `http://localhost:8501` hiện trong Terminal để xem dashboard. Kéo chuột để xoay mô hình 3D, cuộn chuột để phóng to/thu nhỏ. Chỉnh tham số ở thanh bên sẽ tính lại kết quả nhưng không sửa `params.yaml`.
+
+- Bảng CSV và `summary.json`: `results/tables/`, `results/summary.json`.
+- Ảnh PNG 300 dpi và mô hình 3D HTML: `results/figures/` (hình 2D cho Chương 3–4, hình 3D cho Chương 5). Có thể mở `aircraft_model.html` trực tiếp bằng trình duyệt, không cần Streamlit.
+- Notebook chạy lại từ đầu theo từng bước: `notebooks/demo.ipynb`.
+- Trạng thái kiểm thử: `results/test_results.json` và tab **Kiểm chứng** trên dashboard (15 bài, gồm cả các bài khí động của Khải).
+- Tiến độ, lỗi, kết quả gần nhất: `PROGRESS.md`. Giả thiết toán học: `docs/assumptions.md`.
+
+Danh sách hình xuất từ `main.py` (tên file → hàm trong `src/visualize.py`):
+
+| File | Hàm | Dùng ở |
+|---|---|---|
+| `airfoil_profile.png` | `plot_airfoil_2d` | Chương 3 (3.3) |
+| `wing_planform_2d.png` | `plot_wing_planform_2d` | Chương 3 (3.4), Chương 4 (4.1) |
+| `fuselage_profile_2d.png` | `plot_fuselage_profile_2d` | Chương 3 (3.5) |
+| `skin_mass_vs_thickness.png` | `plot_skin_mass_vs_thickness` | Chương 4 (4.2) |
+| `cp_distribution.png`, `span_loading.png`, `lift_drag_polar.png` | `plot_cp_distribution`, `plot_span_loading`, `plot_lift_drag_polar` | Chương 4 (4.3) |
+| `lift_vs_velocity.png` | `plot_lift_vs_velocity` | Chương 4 (4.4) |
+| `convergence.png` | `plot_convergence` | Chương 4 (4.5) |
+| `wing_3d.png`, `fuselage_3d.png`, `aircraft_3d.png`, `aircraft_model.html` | hàm 3D của Vĩ | Chương 5 |
+
 | Mục | Thông tin |
 |---|---|
 | Người thực hiện | Trương Thanh Vĩ, Hà Ngọc Khải |
@@ -93,36 +131,39 @@ deactivate        # venv
 
 ---
 
-## 3. Cấu trúc thư mục dự kiến
+## 3. Cấu trúc thư mục
 
 ```
 .
-├── README.md
-├── requirements.txt
-├── .gitignore
+├── README.md, PROGRESS.md, AI_DECLARATION.md
+├── requirements.txt, .gitignore
 ├── params.yaml                 # tham số đầu vào + đơn vị (SI)
-├── AI_DECLARATION.md           # khai báo phần code do AI tạo/sửa
-├── prompt_log/                 # nhật ký prompt (mỗi file một ngày/phiên)
-│   └── 2026-11-09_ten-chu-de.md
+├── main.py                     # chạy toàn bộ pipeline, lưu kết quả vào results/
+├── run_checks.py               # chạy toàn bộ kiểm thử, ghi results/test_results.json
+├── dashboard.py                # dashboard Streamlit thay đổi kích thước cánh/thân
+├── prompt_log/                 # nhật ký prompt AI (mỗi file một phiên)
 ├── src/
 │   ├── __init__.py
 │   ├── config.py               # đọc params.yaml, hằng số, đổi đơn vị
 │   ├── airfoil.py              # NACA 4 chữ số: độ dày, camber, biên trên/dưới
-│   ├── wing.py                 # hình học cánh 3D, diện tích (tích phân kép)
-│   ├── fuselage.py             # thân máy bay, thể tích/khối lượng (tích phân bội ba)
+│   ├── wing.py                 # cánh 3D, diện tích (tích phân kép, tích phân mặt), thể tích (bội ba)
+│   ├── fuselage.py             # thân: thể tích/khối lượng (bội ba), diện tích mặt (tích phân mặt)
 │   ├── aero.py                 # áp suất, pháp tuyến, lực nâng/cản (tích phân mặt)
-│   ├── validate.py             # kiểm chứng: số vs giải tích, trường hợp đơn giản
-│   └── visualize.py            # render 3D, đồ thị, xuất hình
+│   ├── aero_plots.py           # tên hàm cũ, gọi lại visualize.py
+│   ├── validate.py             # kiểm chứng: số vs giải tích, hội tụ lưới, phương pháp độc lập
+│   └── visualize.py            # hình 3D (Vĩ), hình 2D và đồ thị lực (Khải)
 ├── notebooks/
-│   └── demo.ipynb              # chạy lại toàn bộ từ đầu
+│   └── demo.ipynb              # chạy lại toàn bộ từ đầu theo Bước 1-7
 ├── tests/
-│   └── test_basic.py           # test nhanh các trường hợp có đáp án biết trước
+│   ├── test_basic.py           # trường hợp có đáp án biết trước
+│   └── test_integration.py     # ghép module và pipeline
 ├── results/
-│   ├── tables/                 # bảng kết quả (csv/md)
-│   └── figures/                # hình xuất cho báo cáo/slide (png, dpi >= 300)
-├── docs/
-│   └── assumptions.md          # giả thiết, công thức, quy ước tọa độ
-└── main.py                     # chạy toàn bộ pipeline, lưu kết quả vào results/
+│   ├── summary.json, test_results.json
+│   ├── tables/                 # bảng kết quả CSV
+│   └── figures/                # hình PNG 300 dpi + aircraft_model.html
+├── report/                     # script dựng file Word Chương 3, 4 từ results/
+└── docs/
+    └── assumptions.md          # giả thiết, công thức, quy ước tọa độ
 ```
 
 ### Phân công module
@@ -315,15 +356,15 @@ Theo yêu cầu đề bài, mọi phần code do AI tạo/sửa phải được 
 
 ## 9. Checklist tiến độ
 
-- [ ] Mô hình hóa airfoil bằng hàm toán học (Vĩ)
-- [ ] Mô hình hóa hình dạng thân máy bay (Vĩ)
-- [ ] Tích phân kép: diện tích bề mặt cánh (Vĩ)
-- [ ] Tích phân bội ba: thể tích và khối lượng thân (Vĩ)
-- [ ] Tích phân mặt: lực nâng và lực cản (Khải)
-- [ ] Kiểm chứng kết quả, số vs giải tích (Vĩ: diện tích/thể tích; Khải: lực)
-- [ ] Trực quan hóa 3D, matplotlib / plotly (Vĩ)
-- [ ] Xuất hình/đồ thị cho báo cáo và slide (Vĩ: hình 3D; Khải: biểu đồ, bảng lực)
-- [ ] `AI_DECLARATION.md` + `prompt_log/` hoàn chỉnh (Khải ghi chép; cả hai đánh dấu)
+- [x] Mô hình hóa airfoil bằng hàm toán học (Vĩ)
+- [x] Mô hình hóa hình dạng thân máy bay (Vĩ)
+- [x] Tích phân kép: diện tích bề mặt cánh (Vĩ)
+- [x] Tích phân bội ba: thể tích và khối lượng thân (Vĩ)
+- [x] Tích phân mặt: lực nâng và lực cản (Khải)
+- [x] Kiểm chứng kết quả, số vs giải tích (Vĩ: diện tích/thể tích; Khải: lực)
+- [x] Trực quan hóa 3D, matplotlib / plotly (Vĩ)
+- [x] Xuất hình/đồ thị cho báo cáo và slide (Vĩ: hình 3D; Khải: biểu đồ, bảng lực)
+- [ ] `AI_DECLARATION.md` + `prompt_log/` hoàn chỉnh (Khải ghi chép; cả hai đánh dấu) (còn thiếu `prompt_log/2026-11-14_vi_steps.md` của Vĩ và phần rà soát)
 - [ ] Nhóm trưởng review và chốt
 
 ### Mốc thời gian gợi ý

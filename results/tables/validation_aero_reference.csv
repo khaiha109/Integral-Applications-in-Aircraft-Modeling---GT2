@@ -1,0 +1,15 @@
+﻿Hạng mục,Đại lượng,Tích phân số,Tham chiếu,Sai số tuyệt đối,Sai số tương đối (%),Dung sai (%),Đánh giá,Ghi chú
+1. Lý thuyết thiết diện mỏng,Lực nâng L [N],15089.375612420705,15422.228294458142,332.85268203743726,2.158265820491357,10.0,ĐẠT,"L_theory = q S 2π α_e/(1+2/AR). Chênh lệch do: e=0.90 (≠1), tải elliptic trên cánh thon, hút mép trước (1/cosα), thành phần ma sát."
+1. Lý thuyết thiết diện mỏng,Hệ số nâng C_L [-],0.5069077219256136,0.5180894698734573,0.011181747947843657,2.1582658204913496,10.0,ĐẠT,C_L = L/(q S)
+1. Lý thuyết thiết diện mỏng,Lực pháp tuyến N (cấu hình đồng bộ giả thiết đề) [N],15422.228294793384,15422.228294458142,3.352415660629049e-07,2.173755696402e-09,0.1,ĐẠT,"e=1, tải đều, tắt hút mép: tích phân mặt phải trùng công thức đề (lực pháp tuyến N = L_p/cosα)."
+2. Tích phân mặt vs công thức đóng,Lực nâng do áp suất L_p [N],15103.131598979338,15103.121206088897,0.01039289044092584,6.881286522904879e-05,0.1,ĐẠT,Cùng mô hình áp suất; đo sai số cầu phương.
+2. Tích phân mặt vs công thức đóng,Cản áp suất thô D_raw [N],1050.974829418953,1050.9741062135577,0.0007232053953885043,6.881286523738093e-05,0.1,ĐẠT,D_raw = N sinα (chưa tính hút mép trước).
+2. Tích phân mặt vs công thức đóng,Cản áp suất sau hút mép D_pressure [N],4.857568061907517e-14,"[-0.0150894, 0.0150894]",,,,ĐẠT,Thiết diện mỏng: cản áp suất 2D = 0 (nghịch lý d'Alembert).
+3. Hành vi vật lý,Quét α (α_L0+1..12°): sai số tương đối lớn nhất của L_p [%],6.881286569705743e-05,0.0,6.881286569705743e-05,6.881286569705743e-05,0.1,ĐẠT,5 góc tới; L_p phải tuyến tính theo α_e.
+3. Hành vi vật lý,Lực nâng do áp suất tại α = α_L0 [N],0.0,0.0,0.0,0.0,0.001,ĐẠT,Phải bằng 0 (so với L tại α hiện tại: 0.00e+00).
+3. Hành vi vật lý,Tỉ số L_p(2V)/L_p(V) [-],4.0,4.0,0.0,0.0,0.1,ĐẠT,Lực áp suất tỉ lệ V².
+3. Hành vi vật lý,Cản ma sát D_f [N],196.71977280683905,196.71977280729854,4.594937763613416e-10,2.335778299273706e-10,5.0,ĐẠT,So với q·Cf·(2 mặt)·S·cosα của tấm phẳng; cánh có độ dày sẽ lớn hơn do diện tích ướt.
+4. Bậc độ lớn,Lực nâng L [N],15089.375612420705,"[1000, 100000]",,,,ĐẠT,Máy bay cỡ nhỏ ~ 10^3–10^4 N (L/g ≈ 1538 kg).
+4. Bậc độ lớn,Hệ số cản C_D [-],0.018877260420190396,"[0.01, 0.05]",,,,ĐẠT,Bay bằng ổn định thường 0.01–0.05.
+4. Bậc độ lớn,Hệ số nâng C_L [-],0.5069077219256136,"[0.1, 1.5]",,,,ĐẠT,Dải C_L điển hình khi bay hành trình.
+4. Bậc độ lớn,Độ lướt L/D [-],26.8528224245635,"[5, 30]",,,,ĐẠT,Máy bay cánh nhỏ điển hình ~ 8–20; >20 thường do bỏ qua cản của thân/đuôi.

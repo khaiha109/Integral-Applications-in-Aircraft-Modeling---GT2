@@ -1,0 +1,10 @@
+﻿Đại lượng,Tích phân số,Tham chiếu,Đơn vị,Sai số tuyệt đối,Sai số tương đối (%),Đánh giá,Phương pháp
+Diện tích hình chiếu cánh,13.500000000000004,13.5,m²,3.552713678800501e-15,2.6316397620744448e-14,ĐẠT,dblquad vs hình thang
+Thể tích thân đặc (1D),8.755226026473053,8.755226026473053,m³,0.0,0.0,ĐẠT,quad vs công thức ba đoạn
+Thể tích thân đặc (bội ba),8.755226026473053,8.755226026473053,m³,0.0,0.0,ĐẠT,tplquad vs công thức ba đoạn
+Thể tích vỏ thân (bội ba),0.08164750512099742,0.0816475334617438,m³,2.8340746388577642e-08,3.471108701876069e-05,ĐẠT,tplquad vs quad
+Thân hình trụ kiểm tra,12.315043202071987,12.315043202071987,m³,0.0,0.0,ĐẠT,quad vs πR²L
+Thể tích khối cánh,1.5442433999999994,1.5442434000000003,m³,8.881784197001252e-16,5.75154421705882e-14,ĐẠT,tplquad vs tích phân lặp ∫c²dy·2∫y_t du
+Diện tích mặt thân (tích phân mặt),27.898117962427687,27.898117962427687,m²,0.0,0.0,ĐẠT,"dblquad(x,θ) vs 2π∫R√(1+R'²)dx"
+Mặt bên thân hình trụ kiểm tra,35.18583772020568,35.18583772020568,m²,0.0,0.0,ĐẠT,tích phân mặt vs 2πRL
+Diện tích bề mặt cánh,27.564925592609455,27.0,m²,,,ĐẠT,Kiểm tra cận dưới A > 2S; 2S không phải đáp án giải tích

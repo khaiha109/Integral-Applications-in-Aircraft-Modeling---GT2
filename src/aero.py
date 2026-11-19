@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import csv
 import math
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
@@ -111,12 +111,23 @@ def lift_slope(p: Params, aspect_ratio: float) -> float:
 
 
 def delta_cp(theta: np.ndarray, v: np.ndarray, semi_span: float, alpha_eff: float,
-             slope_ratio: float, span_loading: str) -> np.ndarray:
-    """Delta_Cp(theta, v) = 4*alpha_e*(a/2pi)*cot(theta/2)*g(v)."""
+             slope_ratio: float, span_loading: str, chord=None,
+             mean_chord: float | None = None) -> np.ndarray:
+    """Delta_Cp(theta, v) = 4*alpha_e*(a/2pi)*cot(theta/2)*g(v).
+
+    Tải elip (span_loading='elliptic'): g(v) = (4/pi)*sqrt(1-eta^2) * c_tb/c(v), với
+    c_tb = S/b là dây cung trung bình. Khi đó lực nâng trên một đơn vị sải
+    dL/dy = q*a*alpha_e*c_tb*(4/pi)*sqrt(1-eta^2) đúng dạng elip và tổng lực nâng
+    bằng q*a*alpha_e*S (C_L = a*alpha_e), khớp giả thiết 3.1.5.
+    Nếu không truyền chord/mean_chord thì bỏ hệ số c_tb/c(v) (dạng cũ).
+    # AI-assisted: xem AI_DECLARATION.md (sửa 19/11/2026)
+    """
     cot = 1.0 / np.tan(0.5 * theta)
     if span_loading == "elliptic":
         eta = np.clip(v / semi_span, 0.0, 1.0)
         g = (4.0 / math.pi) * np.sqrt(1.0 - eta ** 2)   # trung bình theo sải = 1
+        if chord is not None and mean_chord is not None:
+            g = g * mean_chord / np.asarray(chord, float)
     else:
         g = 1.0
     return 4.0 * alpha_eff * slope_ratio * cot * g
@@ -225,9 +236,12 @@ def compute_aero_forces(wing: WingGeometry, p: Params | None = None) -> AeroResu
     # dây cung cục bộ -> Cf theo sải
     x_le = np.asarray(wing.surface(np.zeros_like(v_nodes), v_nodes, +1)[0])
     x_te = np.asarray(wing.surface(np.ones_like(v_nodes), v_nodes, +1)[0])
-    cf = skin_friction_coeff(p, x_te - x_le)[None, :]          # (1, n_span)
+    chord = (x_te - x_le)[None, :]                              # (1, n_span)
+    cf = skin_friction_coeff(p, chord)
+    mean_chord = S / (2.0 * semi)                               # c_tb = S/b
 
-    dcp = delta_cp(TH, V, semi, alpha_eff, slope_ratio, p.aero.span_loading)
+    dcp = delta_cp(TH, V, semi, alpha_eff, slope_ratio, p.aero.span_loading,
+                   chord=chord, mean_chord=mean_chord)
 
     F_p = np.zeros(3)
     F_f = np.zeros(3)
@@ -280,6 +294,7 @@ def analytic_reference(wing: WingGeometry, result: AeroResult, p: Params) -> dic
     """
     Đáp án giải tích để kiểm chứng (cho cánh tấm phẳng, không độ dày):
         N = q * a * alpha_e * 2 * ∫ g(y) c(y) dy      (lực pháp tuyến)
+          = q * a * alpha_e * S                     (tải elip, vì g·c = (4/pi)sqrt(1-eta^2)·c_tb)
         L (phần do áp suất) = N / cos(alpha) nếu có hút mép trước, ngược lại N cos(alpha)
         D_pressure_raw = N sin(alpha)
     trong đó g(y) là hệ số phân bố tải theo sải (elliptic hoặc đều).
@@ -288,10 +303,11 @@ def analytic_reference(wing: WingGeometry, result: AeroResult, p: Params) -> dic
     v, w = _gauss(400, 0.0, semi)
     c = np.asarray(wing.surface(np.ones_like(v), v, +1)[0]) - np.asarray(wing.surface(np.zeros_like(v), v, +1)[0])
     if p.aero.span_loading == "elliptic":
-        g = (4.0 / math.pi) * np.sqrt(1.0 - (v / semi) ** 2)
+        mean_chord = result.S_ref / (2.0 * semi)
+        g = (4.0 / math.pi) * np.sqrt(1.0 - (v / semi) ** 2) * mean_chord / c
     else:
         g = np.ones_like(v)
-    weighted_area = 2.0 * float(np.sum(g * c * w))
+    weighted_area = 2.0 * float(np.sum(g * c * w))      # = S với tải elip
     N = result.q_inf * result.lift_slope * math.radians(result.alpha_eff_deg) * weighted_area
     a = p.alpha_rad
     L = N / math.cos(a) if p.aero.leading_edge_suction else N * math.cos(a)

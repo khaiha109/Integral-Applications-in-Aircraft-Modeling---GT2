@@ -1,0 +1,18 @@
+﻿Đại lượng,Giá trị,Đơn vị,Mô tả
+L,15089.642379579238,N,Lực nâng tổng (tích phân mặt)
+L_pressure,15103.131598979338,N,Lực nâng do áp suất
+L_friction,-13.489219400099971,N,Lực nâng do ma sát (nhỏ)
+D_pressure_raw,370.9863630954159,N,Cản áp suất thô (chưa tính hút mép trước)
+D_suction_correction,-370.9863630954159,N,Hiệu chỉnh hút mép trước
+D_pressure,4.857568061907517e-14,N,Cản áp suất sau hiệu chỉnh
+D_friction,196.7564831415321,N,Cản ma sát bề mặt (tích phân mặt)
+D_induced_ref,365.2219900288888,N,"Cản cảm ứng tham chiếu CL^2/(pi e AR), không phải tích phân mặt"
+D_total,561.978473170421,N,Tổng lực cản
+CL,0.5069166836173423,-,L / (q S)
+CD,0.018878927460163633,-,D / (q S)
+L/D,26.85092596954915,-,Độ lướt
+S_ref,13.500000000000002,m^2,Diện tích hình chiếu
+AR,7.4074074074074066,-,b^2 / S
+lift_slope,4.83321946706122,1/rad,Độ dốc lực nâng a
+alpha_eff,6.000000000000001,deg,alpha - alpha_L0
+q_inf,2205.0,Pa,Áp suất động 1/2 rho V^2
